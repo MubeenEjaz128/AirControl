@@ -51,12 +51,37 @@ class INPUT(ctypes.Structure):
     _fields_ = [("type", wintypes.DWORD), ("union", _INPUTUNION)]
 
 
+def _ensure_desktop():
+    try:
+        hdesk = user32.OpenInputDesktop(0, False, 0x01FF)
+        if hdesk:
+            user32.SetThreadDesktop(hdesk)
+    except Exception:
+        pass
+
+
 def _send(inputs):
+    _ensure_desktop()
     array_type = INPUT * len(inputs)
     payload = array_type(*inputs)
     sent = user32.SendInput(len(inputs), payload, ctypes.sizeof(INPUT))
     if sent != len(inputs):
-        raise ctypes.WinError()
+        for item in inputs:
+            if item.type == INPUT_MOUSE:
+                user32.mouse_event(
+                    item.mi.dwFlags,
+                    item.mi.dx,
+                    item.mi.dy,
+                    item.mi.mouseData,
+                    item.mi.dwExtraInfo,
+                )
+            elif item.type == INPUT_KEYBOARD:
+                user32.keybd_event(
+                    item.ki.wVk,
+                    item.ki.wScan,
+                    item.ki.dwFlags,
+                    item.ki.dwExtraInfo,
+                )
 
 
 def _mouse(flags):

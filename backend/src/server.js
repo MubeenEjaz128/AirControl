@@ -204,4 +204,4 @@ io.on("connection", async (socket) => {
 });
 
 await connectDb();
-httpServer.listen(PORT, "0.0.0.0", () => console.log(`AirControl API listening on :${PORT}`));
+httpServer.listen(PORT, () => console.log(`AirControl API listening on :${PORT}`));

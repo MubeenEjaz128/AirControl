@@ -3,6 +3,7 @@ node_modules/
 dist/
 .env
 *.log
+*.tsbuildinfo
 
 # Python
 __pycache__/
