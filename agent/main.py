@@ -41,11 +41,13 @@ DEFAULT_CONFIG = {
 def load_config():
     config = DEFAULT_CONFIG.copy()
     path = BASE_DIR / "config.json"
+
     if path.exists():
         try:
             config.update(json.loads(path.read_text(encoding="utf-8")))
         except Exception as exc:
             print("Config warning:", exc)
+
     return config
 
 
@@ -74,6 +76,7 @@ def disconnect():
 @sio.on("config:update")
 def on_config_update(next_config):
     global config
+
     if isinstance(next_config, dict):
         with config_lock:
             config = {**config, **next_config}
@@ -97,16 +100,23 @@ def on_command(command):
         print("Cursor calibration reset.")
 
 
-def connect_cloud():
-    try:
-        sio.connect(
-            API_URL,
-            auth={"role": "agent", "deviceId": DEVICE_ID, "token": AGENT_TOKEN},
-            transports=["websocket", "polling"],
-            wait_timeout=8,
-        )
-    except Exception as exc:
-        print("Cloud connection unavailable:", exc)
+def cloud_connection_worker():
+    while True:
+        if sio.connected:
+            time.sleep(2)
+            continue
+
+        try:
+            sio.connect(
+                API_URL,
+                auth={"role": "agent", "deviceId": DEVICE_ID, "token": AGENT_TOKEN},
+                transports=["websocket", "polling"],
+                wait_timeout=8,
+            )
+            sio.wait()
+        except Exception as exc:
+            print("Cloud connection unavailable; retrying:", exc)
+            time.sleep(5)
 
 
 def emit_status(**payload):
@@ -126,9 +136,10 @@ def emit_gesture(event):
 
 
 def main():
-    threading.Thread(target=connect_cloud, daemon=True).start()
+    threading.Thread(target=cloud_connection_worker, daemon=True).start()
 
     cap = cv2.VideoCapture(CAMERA_INDEX, cv2.CAP_DSHOW)
+
     if not cap.isOpened():
         raise RuntimeError(f"Could not open camera index {CAMERA_INDEX}")
 
@@ -163,7 +174,9 @@ def main():
                 time.sleep(0.1)
                 continue
 
-            frame = cv2.flip(frame, 1)
+            # Process the camera frame unmirrored. The gesture engine applies
+            # mirrorCamera to cursor coordinates, while the preview is mirrored
+            # only for a natural self-view.
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             result = hands.process(rgb)
             hand_detected = bool(result.multi_hand_landmarks)
@@ -176,7 +189,12 @@ def main():
                 lm = hand.landmark
 
                 if current.get("enabled", True):
-                    x, y = engine.cursor(lm, current, controller.screen_w, controller.screen_h)
+                    x, y = engine.cursor(
+                        lm,
+                        current,
+                        controller.screen_w,
+                        controller.screen_h,
+                    )
                     controller.move_to(x, y)
 
                     event = engine.process(lm, current)
@@ -208,9 +226,11 @@ def main():
                 last_status = now
 
             if PREVIEW:
+                preview_frame = cv2.flip(frame, 1)
                 state = "ON" if current.get("enabled", True) else "OFF"
+
                 cv2.putText(
-                    frame,
+                    preview_frame,
                     f"AirControl {state} | {fps:.0f} FPS",
                     (18, 30),
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -219,7 +239,7 @@ def main():
                     2,
                 )
                 cv2.putText(
-                    frame,
+                    preview_frame,
                     f"Gesture: {last_gesture}",
                     (18, 58),
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -227,7 +247,7 @@ def main():
                     (180, 210, 255),
                     1,
                 )
-                cv2.imshow("AirControl Agent", frame)
+                cv2.imshow("AirControl Agent", preview_frame)
 
                 if cv2.waitKey(1) & 0xFF in (ord("q"), 27):
                     break
