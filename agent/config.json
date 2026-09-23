@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "sensitivity": 1.15,
+  "smoothing": 0.32,
+  "pinchThreshold": 0.42,
+  "gestureCooldownMs": 450,
+  "screenshotHoldMs": 850,
+  "activeMargin": 0.08,
+  "mirrorCamera": true
+}
