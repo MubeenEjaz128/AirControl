@@ -33,10 +33,10 @@ class GestureEngine:
     def _pinch_candidate(self, lm, threshold):
         palm_width = max(dist(lm[5], lm[17]), 0.01)
         candidates = {
-            "left_click": dist(lm[4], lm[8]) / palm_width,
+            "right_click": dist(lm[4], lm[8]) / palm_width,
             "copy": dist(lm[4], lm[12]) / palm_width,
             "paste": dist(lm[4], lm[16]) / palm_width,
-            "right_click": dist(lm[4], lm[20]) / palm_width,
+            "left_click": dist(lm[4], lm[20]) / palm_width,
         }
         action, ratio = min(candidates.items(), key=lambda item: item[1])
         return (action, ratio) if ratio <= threshold else (None, ratio)
@@ -94,10 +94,10 @@ class GestureEngine:
             self.was_pinching = True
             self.last_action_at = now
             names = {
-                "left_click": "Thumb + Index",
+                "right_click": "Thumb + Index",
                 "copy": "Thumb + Middle",
                 "paste": "Thumb + Ring",
-                "right_click": "Thumb + Pinky",
+                "left_click": "Thumb + Pinky",
             }
             return {
                 "gesture": names[action],

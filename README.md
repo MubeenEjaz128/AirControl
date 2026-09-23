@@ -7,10 +7,10 @@ AirControl is a webcam-powered gesture controller for Windows with a professiona
 | Gesture | Action |
 | --- | --- |
 | Move index finger | Move cursor |
-| Thumb + Index | Left click |
+| Thumb + Pinky / Little finger | Left click |
 | Thumb + Middle | Copy |
 | Thumb + Ring | Paste |
-| Thumb + Pinky | Right click |
+| Thumb + Index | Right click |
 | Open palm hold | Screenshot |
 
 ## Architecture

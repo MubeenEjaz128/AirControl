@@ -63,10 +63,10 @@ const fallbackConfig: Config = {
 
 const gestures = [
   ["Index move", "Cursor", MousePointer2],
-  ["Thumb + Index", "Left click", Crosshair],
+  ["Thumb + Pinky", "Left click", Crosshair],
   ["Thumb + Middle", "Copy", Copy],
   ["Thumb + Ring", "Paste", Copy],
-  ["Thumb + Pinky", "Right click", MousePointer2],
+  ["Thumb + Index", "Right click", MousePointer2],
   ["Open palm hold", "Screenshot", MonitorUp],
 ] as const;
 
